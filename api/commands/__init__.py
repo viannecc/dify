@@ -3,6 +3,7 @@ CLI command modules extracted from `commands.py`.
 """
 
 from .account import create_tenant, reset_email, reset_password
+from .admin import demote_super_admin, init_super_admin, list_super_admins, promote_super_admin
 from .plugin import (
     extract_plugins,
     extract_unique_plugins,
@@ -45,18 +46,22 @@ __all__ = [
     "convert_to_agent_apps",
     "create_tenant",
     "delete_archived_workflow_runs",
+    "demote_super_admin",
     "export_app_messages",
     "extract_plugins",
     "extract_unique_plugins",
     "file_usage",
     "fix_app_site_missing",
+    "init_super_admin",
     "install_plugins",
     "install_rag_pipeline_plugins",
+    "list_super_admins",
     "migrate_annotation_vector_database",
     "migrate_data_for_plugin",
     "migrate_knowledge_vector_database",
     "migrate_oss",
     "old_metadata_migration",
+    "promote_super_admin",
     "remove_orphaned_files_on_storage",
     "reset_email",
     "reset_encrypt_key_pair",

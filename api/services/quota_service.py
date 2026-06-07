@@ -214,6 +214,37 @@ class QuotaService:
             logger.exception("Failed to release quota, reservation_id: %s", reservation_id)
 
     @staticmethod
+    def check_user_quota(tenant_id, account_id, quota_type_str="token"):
+        """
+        Check if user has exceeded their quota.
+        Returns (is_exceeded, used, limit). -1 limit means unlimited.
+        """
+        from models.account import UserQuotaType
+        from services.admin_service import AdminService
+
+        try:
+            qt = UserQuotaType(quota_type_str)
+        except ValueError:
+            return False, 0, -1
+
+        return AdminService.check_user_quota_exceeded(tenant_id, account_id, qt)
+
+    @staticmethod
+    def consume_user_quota(tenant_id, account_id, quota_type_str="token", amount=1):
+        """
+        Consume user quota. Returns True if allowed, False if exceeded.
+        """
+        from models.account import UserQuotaType
+        from services.admin_service import AdminService
+
+        try:
+            qt = UserQuotaType(quota_type_str)
+        except ValueError:
+            return True
+
+        return AdminService.consume_user_quota(tenant_id, account_id, qt, amount)
+
+    @staticmethod
     def get_remaining(quota_type: QuotaType, tenant_id: str) -> int:
         from services.billing_service import BillingService
 

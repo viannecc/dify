@@ -1,0 +1,26 @@
+
+from flask import Response
+from flask_login import current_user
+
+from libs.login import login_required
+
+
+def admin_required(func):
+    """
+    Decorator that ensures current user is a super admin.
+    Must be used together with @login_required (place @admin_required after @login_required).
+    """
+
+    decorated = login_required(func)
+
+    def wrapper(*args, **kwargs):
+        user = current_user._get_current_object()
+        if not user or not getattr(user, 'is_super_admin', False):
+            return Response(
+                '{"code": "forbidden", "message": "Super admin privileges required"}',
+                status=403,
+                content_type='application/json',
+            )
+        return decorated(*args, **kwargs)
+
+    return wrapper

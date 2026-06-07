@@ -38,6 +38,7 @@ from models.account import (
     Account,
     AccountIntegrate,
     AccountStatus,
+    SystemRole,
     Tenant,
     TenantAccountJoin,
     TenantAccountRole,
@@ -1465,6 +1466,7 @@ class RegisterService:
 
             account.last_login_ip = ip_address
             account.initialized_at = naive_utc_now()
+            account.system_role = SystemRole.SUPER_ADMIN
 
             TenantService.create_owner_tenant_if_not_exist(account=account, is_setup=True)
 

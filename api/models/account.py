@@ -76,6 +76,11 @@ class TenantAccountRole(enum.StrEnum):
         }
 
 
+class SystemRole(enum.StrEnum):
+    SUPER_ADMIN = "super_admin"
+    USER = "user"
+
+
 class AccountStatus(enum.StrEnum):
     PENDING = "pending"
     UNINITIALIZED = "uninitialized"
@@ -106,6 +111,9 @@ class Account(UserMixin, TypeBase):
     )
     status: Mapped[AccountStatus] = mapped_column(
         EnumText(AccountStatus, length=16), server_default=sa.text("'active'"), default=AccountStatus.ACTIVE
+    )
+    system_role: Mapped[SystemRole] = mapped_column(
+        EnumText(SystemRole, length=16), server_default=sa.text("'user'"), default=SystemRole.USER
     )
     initialized_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, default=None)
     created_at: Mapped[datetime] = mapped_column(
@@ -225,6 +233,10 @@ class Account(UserMixin, TypeBase):
     @property
     def is_dataset_operator(self):
         return self.role == TenantAccountRole.DATASET_OPERATOR
+
+    @property
+    def is_super_admin(self):
+        return self.system_role == SystemRole.SUPER_ADMIN
 
 
 class TenantStatus(enum.StrEnum):
@@ -426,4 +438,46 @@ class TenantPluginAutoUpgradeStrategy(TypeBase):
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=func.current_timestamp(), init=False, onupdate=func.current_timestamp()
+    )
+
+
+class UserQuotaType(enum.StrEnum):
+    TOKEN = "token"
+    API_CALL = "api_call"
+    APP_COUNT = "app_count"
+
+
+class UserQuotaPeriod(enum.StrEnum):
+    DAILY = "daily"
+    MONTHLY = "monthly"
+    TOTAL = "total"
+
+
+class UserQuota(TypeBase):
+    __tablename__ = "user_quotas"
+    __table_args__ = (
+        sa.PrimaryKeyConstraint("id", name="user_quota_pkey"),
+        sa.Index("user_quota_tenant_user_idx", "tenant_id", "account_id"),
+        sa.UniqueConstraint("tenant_id", "account_id", "quota_type", name="unique_user_quota"),
+    )
+
+    id: Mapped[str] = mapped_column(
+        StringUUID, insert_default=lambda: str(uuid4()), default_factory=lambda: str(uuid4()), init=False
+    )
+    tenant_id: Mapped[str] = mapped_column(StringUUID, nullable=False)
+    account_id: Mapped[str] = mapped_column(StringUUID, nullable=False)
+    quota_type: Mapped[UserQuotaType] = mapped_column(
+        EnumText(UserQuotaType, length=16), nullable=False, default=UserQuotaType.TOKEN
+    )
+    quota_limit: Mapped[int] = mapped_column(sa.BigInteger, nullable=False, default=0)
+    quota_used: Mapped[int] = mapped_column(sa.BigInteger, nullable=False, default=0)
+    period: Mapped[UserQuotaPeriod] = mapped_column(
+        EnumText(UserQuotaPeriod, length=16), nullable=False, default=UserQuotaPeriod.MONTHLY
+    )
+    is_active: Mapped[bool] = mapped_column(sa.Boolean, nullable=False, default=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.current_timestamp(), nullable=False, init=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.current_timestamp(), nullable=False, init=False, onupdate=func.current_timestamp()
     )

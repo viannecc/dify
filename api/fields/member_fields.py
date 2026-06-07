@@ -34,6 +34,7 @@ class Account(_AccountAvatar):
     id: str
     name: str
     email: str
+    system_role: str | None = None
     is_password_set: bool
     interface_language: str | None = None
     interface_theme: str | None = None
