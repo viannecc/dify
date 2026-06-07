@@ -63,6 +63,7 @@ export const AppContextProvider: FC<AppContextProviderProps> = ({ children }) =>
   const isCurrentWorkspaceOwner = useMemo(() => currentWorkspace.role === 'owner', [currentWorkspace.role])
   const isCurrentWorkspaceEditor = useMemo(() => ['owner', 'admin', 'editor'].includes(currentWorkspace.role), [currentWorkspace.role])
   const isCurrentWorkspaceDatasetOperator = useMemo(() => currentWorkspace.role === 'dataset_operator', [currentWorkspace.role])
+  const isSuperAdmin = useMemo(() => userProfile.system_role === 'super_admin', [userProfile.system_role])
 
   const mutateUserProfile = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['common', 'user-profile'] })
@@ -143,6 +144,7 @@ export const AppContextProvider: FC<AppContextProviderProps> = ({ children }) =>
       isCurrentWorkspaceOwner,
       isCurrentWorkspaceEditor,
       isCurrentWorkspaceDatasetOperator,
+      isSuperAdmin,
       mutateCurrentWorkspace,
       isLoadingCurrentWorkspace,
       isValidatingCurrentWorkspace,

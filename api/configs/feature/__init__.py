@@ -1250,6 +1250,11 @@ class CeleryScheduleTasksConfig(BaseSettings):
         default=60 * 60,
     )
 
+    ENABLE_RESET_USER_QUOTA_TASK: bool = Field(
+        description="Enable daily/monthly user quota reset task",
+        default=True,
+    )
+
 
 class PositionConfig(BaseSettings):
     POSITION_PROVIDER_PINS: str = Field(

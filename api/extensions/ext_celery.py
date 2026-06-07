@@ -242,6 +242,19 @@ def init_app(app: DifyApp) -> Celery:
             "schedule": timedelta(minutes=dify_config.API_TOKEN_LAST_USED_UPDATE_INTERVAL),
         }
 
+    if dify_config.ENABLE_RESET_USER_QUOTA_TASK:
+        imports.append("schedule.reset_user_quota_task")
+        # Reset DAILY quotas every day at 00:05.
+        beat_schedule["reset_user_quota_daily"] = {
+            "task": "schedule.reset_user_quota_task.reset_daily_user_quota_task",
+            "schedule": crontab(minute="5", hour="0"),
+        }
+        # Reset MONTHLY quotas on the 1st of each month at 00:05.
+        beat_schedule["reset_user_quota_monthly"] = {
+            "task": "schedule.reset_user_quota_task.reset_monthly_user_quota_task",
+            "schedule": crontab(minute="5", hour="0", day_of_month="1"),
+        }
+
     if dify_config.ENTERPRISE_ENABLED and dify_config.ENTERPRISE_TELEMETRY_ENABLED:
         imports.append("tasks.enterprise_telemetry_task")
     celery_app.conf.update(beat_schedule=beat_schedule, imports=imports)
