@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any
 
 from flask_restx import fields
 from pydantic import computed_field, field_validator
@@ -58,6 +59,7 @@ class AccountWithRole(_AccountAvatar):
     created_at: int | None = None
     role: str
     status: str
+    quotas: list[Any] = []
 
     @field_validator("last_login_at", "last_active_at", "created_at", mode="before")
     @classmethod

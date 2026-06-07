@@ -94,25 +94,17 @@ class MemberListApi(Resource):
         members = TenantService.get_tenant_members(current_user.current_tenant)
         member_models = TypeAdapter(list[AccountWithRole]).validate_python(members, from_attributes=True)
 
-        # Fetch user quotas for each member
-        tenant_id = str(current_user.current_tenant.id) if current_user.current_tenant else ""
-        quotas_by_user = {}
-        if tenant_id:
-            all_quotas = AdminService.get_user_quotas(tenant_id)
-            for q in all_quotas:
-                aid = q["account_id"]
-                if aid not in quotas_by_user:
-                    quotas_by_user[aid] = []
-                quotas_by_user[aid].append(q)
+        tenant_id = str(current_user.current_tenant.id)
+        all_quotas = AdminService.get_user_quotas(tenant_id)
+        quotas_by_user: dict[str, list] = {}
+        for q in all_quotas:
+            quotas_by_user.setdefault(q["account_id"], []).append(q)
 
-        # Attach quota info to each member
-        accounts_with_quotas = []
         for member in member_models:
-            member_dict = member.model_dump(mode="json")
-            member_dict["quotas"] = quotas_by_user.get(member.id, [])
-            accounts_with_quotas.append(member_dict)
+            member.quotas = quotas_by_user.get(member.id, [])
 
-        return {"accounts": accounts_with_quotas}, 200
+        response = AccountWithRoleList(accounts=member_models)
+        return response.model_dump(mode="json"), 200
 
 
 @console_ns.route("/workspaces/current/members/invite-email")

@@ -111,17 +111,22 @@ class AppGenerateService:
             except QuotaExceededError:
                 raise InvokeRateLimitError(f"Workflow execution quota limit reached for tenant {app_model.tenant_id}")
 
-        # User-level quota check (only for workspace members, not end-users)
-        if isinstance(user, Account) and app_model.created_by:
+        # User-level quota check and consume: applies to the calling workspace member, not the app creator.
+        if isinstance(user, Account):
             is_exceeded, used, limit = QuotaService.check_user_quota(
                 tenant_id=app_model.tenant_id,
-                account_id=app_model.created_by,
+                account_id=user.id,
                 quota_type_str="token",
             )
             if is_exceeded:
                 raise InvokeRateLimitError(
-                    f"User token quota exceeded: {used}/{limit} for account {app_model.created_by}"
+                    f"User token quota exceeded: {used}/{limit} for account {user.id}"
                 )
+            QuotaService.consume_user_quota(
+                tenant_id=app_model.tenant_id,
+                account_id=user.id,
+                quota_type_str="token",
+            )
 
         # app level rate limiter
         max_active_request = cls._get_max_active_requests(app_model)
